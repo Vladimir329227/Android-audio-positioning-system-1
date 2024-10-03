@@ -27,9 +27,9 @@ project("testbluetoothconnection")
 # used in the AndroidManifest.xml file.
 add_library(${CMAKE_PROJECT_NAME} SHARED
     # List C/C++ source files with relative paths to this CMakeLists.txt.
-    testbluetoothconnection.cpp corrVova.cpp corrVova.h corrVova_terminate.cpp corrVova_terminate.h rt_nonfinite.cpp rt_nonfinite.h FFTImplementationCallback.h FFTImplementationCallback.cpp fft.h fft.cpp)
+    testbluetoothconnection.cpp CORRX.cpp CORRX.h ifft.cpp ifft.h CORRX_terminate.cpp CORRX_terminate.h rt_nonfinite.cpp rt_nonfinite.h FFTImplementationCallback.h FFTImplementationCallback.cpp)
 
-# CORRX.cpp CORRX.h ifft.cpp ifft.h
+# fft.h fft.cpp corrVova.cpp corrVova.h corrVova_terminate.cpp corrVova_terminate.h
 
 
 # Specifies libraries CMake should link to your target library. You

@@ -2,14 +2,13 @@
 // File: FFTImplementationCallback.h
 //
 // MATLAB Coder version            : 5.1
-// C/C++ source code generated on  : 08-Apr-2024 22:06:09
+// C/C++ source code generated on  : 22-Jul-2024 14:53:53
 //
 #ifndef FFTIMPLEMENTATIONCALLBACK_H
 #define FFTIMPLEMENTATIONCALLBACK_H
 
 // Include Files
 #include "rtwtypes.h"
-#include "coder_array.h"
 #include <cstddef>
 #include <cstdlib>
 
@@ -21,24 +20,21 @@ namespace coder
     class FFTImplementationCallback
     {
      public:
-      static void get_algo_sizes(int nfft, boolean_T useRadix2, int *n2blue, int
-        *nRows);
-      static void dobluesteinfft(const ::coder::array<double, 1U> &x, int n2blue,
-        int nfft, const ::coder::array<double, 2U> &costab, const ::coder::array<
-        double, 2U> &sintab, const ::coder::array<double, 2U> &sintabinv, ::
-        coder::array<creal_T, 1U> &y);
-      static void r2br_r2dit_trig_impl(const ::coder::array<creal_T, 1U> &x, int
-        unsigned_nRows, const ::coder::array<double, 2U> &costab, const ::coder::
-        array<double, 2U> &sintab, ::coder::array<creal_T, 1U> &y);
-      static void doHalfLengthRadix2(const ::coder::array<double, 1U> &x, ::
-        coder::array<creal_T, 1U> &y, int unsigned_nRows, const ::coder::array<
-        double, 2U> &costab, const ::coder::array<double, 2U> &sintab);
+      static void generate_twiddle_tables(double costab[131073], double sintab
+        [131073]);
+      static void r2br_r2dit_trig(const creal_T x[262144], const double costab
+        [131073], const double sintab[131073], creal_T y[262144]);
+      static void doHalfLengthRadix2(const double x[10000], int xoffInit,
+        creal_T y[262144], const double costab[131073], const double sintab
+        [131073]);
+      static void b_doHalfLengthRadix2(const double x[96000], int xoffInit,
+        creal_T y[262144], const double costab[131073], const double sintab
+        [131073]);
      protected:
-      static void doHalfLengthBluestein(const ::coder::array<double, 1U> &x, ::
-        coder::array<creal_T, 1U> &y, int nrowsx, int nRows, int nfft, const ::
-        coder::array<creal_T, 1U> &wwc, const ::coder::array<double, 2U> &costab,
-        const ::coder::array<double, 2U> &sintab, const ::coder::array<double,
-        2U> &costabinv, const ::coder::array<double, 2U> &sintabinv);
+      static void get_bitrevIndex(int bitrevIndex[131072]);
+      static void getback_radix2_fft(creal_T y[262144], int yoff, const creal_T
+        reconVar1[131072], const creal_T reconVar2[131072], const int wrapIndex
+        [131072], int hnRows);
     };
   }
 }

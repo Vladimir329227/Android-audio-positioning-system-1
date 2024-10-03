@@ -15,6 +15,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
+import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
@@ -52,12 +53,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         System.loadLibrary("testbluetoothconnection");
     }
 
-    public static native double[] argInit_real_T(double[] inp1, double[] inp2, int razm1, int razm2);
+    public static native double[] argInit_real_T(short[] inp, int razm, int mod);
 
     public Button buttun_t;
     public Button buttun_conneckt;
     public Button buttun_zvuk;
     public Button buttun_find_zvuk;
+    public Button buttun_sverit_zv;
+
     public TextView text_t;
     public ImageView imageView;
     public boolean IsOn = false;
@@ -152,46 +155,87 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, sampleRate, channelConfig, audioFormat, myBufferSize);
     }
 
-    int razmer = 96000;
-    int chastota = 16000;
+    int razmer = 144000;
+    int chastota = 48000;
 
     short[] testBuff1 = new short[razmer];
-    short[] testBuff2;
-
+    short[] testBuff2 = new short[1];
     double[] inpBuff1 = new double[razmer];
     double[] inpBuff2;
-
     int cur_nam = 0;
+
+    public void add_to_file(short[] buff, String name){
+        FileOutputStream fos = null;
+        try {
+            String text = Arrays.toString(buff);
+            Log.d(TAG, text);
+
+            fos = openFileOutput(name, MODE_PRIVATE);
+            fos.write(text.getBytes());
+        }
+        catch(IOException ex) {
+        }
+        finally {
+            try {
+                if (fos != null)
+                    fos.close();
+            } catch (IOException ex) {
+            }
+        }
+    }
+
+    public Thread MediaReder_byBuff = new Thread(new Runnable() {
+        @Override
+        public void run() {
+            audioRecord.startRecording();
+            if (audioRecord == null){
+                Log.d(TAG, "Vse figna!!!!!!!!! ");
+                return;
+            }
+            short[] myBuffer = new short[myBufferSize];
+            int readCount = 0;
+            int totalCount = 0;
+            testBuff1 = new short[razmer];
+            cur_nam = 0;
+            while (isReading) {
+                AudioTimestamp audioTimestamp = new AudioTimestamp();
+                int status = audioRecord.getTimestamp(audioTimestamp, AudioTimestamp.TIMEBASE_MONOTONIC);
+                if (status == AudioRecord.SUCCESS) {
+                    Log.d(TAG, "17.08.2024 Oll Ok");
+                    long referenceFrame = audioTimestamp.framePosition;
+                    long referenceTimestamp = audioTimestamp.nanoTime;
+                    Log.d(TAG, Long.toString(referenceFrame)+"-=-=-=-=-=-"+Long.toString(referenceTimestamp));
+
+                }
+                readCount = audioRecord.read(myBuffer, 0, myBufferSize);
+                totalCount += readCount;
+                //add_to_file(myBuffer);
+                for (short i : myBuffer){
+                    testBuff1[cur_nam%razmer] = i;
+                    cur_nam++;
+                }
+                Log.d(TAG, "Rez ======= ---------- ++++++" + cur_nam);
+                if (cur_nam >= razmer){
+                    Log.d(TAG, "-=-=-=-=-=-=-=-=-=-=-=-=End reading-=-=-=-=-=-=-=-=-=-=-=-=-=");
+                    //add_to_file(testBuff1);
+                    text_t.setText("Конец записи ");
+                    audioRecord.stop();
+                    isReading = false;
+                    break;
+                }
+                Log.d(TAG, "readCount = " + readCount + ", totalCount = "
+                        + totalCount + ", Mas :" + Arrays.toString(myBuffer));
+            }
+        }
+    });
+
     public void readStart(View v) {
         Log.d(TAG, "read start");
         audioRecord.startRecording();
         isReading = true;
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                if (audioRecord == null){
-                    Log.d(TAG, "Vse figna!!!!!!!!! ");
-                    return;
-                }
-                short[] myBuffer = new short[myBufferSize];
-                int readCount = 0;
-                int totalCount = 0;
-                while (isReading) {
-                    readCount = audioRecord.read(myBuffer, 0, myBufferSize);
-                    totalCount += readCount;
-                    //add_to_file(myBuffer);
-                    for (short i : myBuffer){
-                        testBuff1[cur_nam%razmer] = i;
-                        cur_nam++;
-                    }
-                    Log.d(TAG, "Rez ======= ---------- ++++++" + cur_nam);
-                    if (cur_nam >= razmer)
-                        break;
-                    Log.d(TAG, "readCount = " + readCount + ", totalCount = "
-                            + totalCount + ", Mas :" + Arrays.toString(myBuffer));
-                }
-            }
-        }).start();
+        if (MediaReder_byBuff.isAlive())
+            MediaReder_byBuff.stop();
+        MediaReder_byBuff.run();
     }
 
     public void readStop(View v) {
@@ -237,8 +281,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     inpBuff2 = new double[shortBuffer.length];
                     for (int i=0;i<shortBuffer.length;i++){
                         testBuff2[i] = shortBuffer[i];
-
-
                     }
                     String text =  Arrays.toString(shortBuffer);
                     fos = openFileOutput("test.txt", MODE_PRIVATE);
@@ -330,6 +372,27 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
+    private short[] interpolate(short[] input, int targetSampleRate) {
+        int inputLength = input.length;
+        int outputLength = (int) ((double) inputLength * targetSampleRate / chastota);
+        short[] output = new short[outputLength];
+
+        for (int i = 0; i < outputLength; i++) {
+            double index = (double) i * inputLength / outputLength;
+            int lowerIndex = (int) Math.floor(index);
+            int upperIndex = (int) Math.ceil(index);
+            double fraction = index - lowerIndex;
+
+            if (upperIndex >= inputLength) {
+                output[i] = input[lowerIndex];
+            } else {
+                output[i] = (short) (input[lowerIndex] * (1 - fraction) + input[upperIndex] * fraction);
+            }
+        }
+
+        return output;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -361,8 +424,30 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         buttun_conneckt = (Button) findViewById(R.id.button2);
         buttun_zvuk = (Button) findViewById(R.id.button3);
         buttun_find_zvuk = (Button) findViewById(R.id.button4);
+        buttun_sverit_zv = (Button) findViewById(R.id.button5);
 
-        mPlayer = MediaPlayer.create(this, R.raw.zvuk);
+        mPlayer = MediaPlayer.create(this, R.raw.right_sound);
+
+        buttun_sverit_zv.setOnClickListener(new View.OnClickListener() {
+
+            public void onClick(View v) {
+                text_t.setText("Ok 22/07/24 " + Boolean.toString(isReading) );
+                /*if (audioRecord != null) {
+                    audioRecord.release();
+                    audioRecord = null;
+                }*/
+                new Thread(() -> {
+                    mPlayer.start(); ///////// раскомитить !!!!!!!!!!!!!
+                }).start();
+                createAudioRecorder();
+                if (isReading){
+                    readStop(v);
+                }
+                else {
+                    readStart(v);
+                }
+            }
+        });
 
         buttun_find_zvuk.setOnClickListener(new View.OnClickListener() {
 
@@ -370,12 +455,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 text_t.setText("Ok 21/06/24");
                 int resId = R.raw.test1; // replace my_audio_file with the name of your audio file
                 String filePath = "android.resource://" + getPackageName() + "/" + resId;
-
+/*
                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 intent.setType("audio/*");
                 startActivityForResult(intent, 666);
-
+*/
                 createAudioRecorder();
 
                 if (isReading){
@@ -390,18 +475,40 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         buttun_zvuk.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View v) {
-                double[] test = {1.0,1.0,1.0};
-
+/*
                 for (int i=0;i<inpBuff1.length;i++)
                     inpBuff1[i] =  testBuff1[i];
                 for (int i=0;i<inpBuff2.length;i++)
                     inpBuff2[i] =  testBuff2[i];
+*/
+                short[] interpolatedBuffer = interpolate(testBuff1, 300000);
+                add_to_file(testBuff1, "test1.txt");
+                add_to_file(interpolatedBuffer, "test2.txt");
 
+                Log.d(TAG, "++++++16/08/2024++++++++ :" + Arrays.toString(testBuff1));
 
-                Log.e(String.valueOf(200), Integer.toString(inpBuff1.length) + "_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+" + Integer.toString(inpBuff2.length));
+                /*double[] rez_skan = argInit_real_T(testBuff1, testBuff1.length, 0);
+                double[] rez_skan2 = argInit_real_T(testBuff1, testBuff1.length, 1);
+                double rez_skan_fin = 0, max_i=0;
+                double rez_skan_fin2 = 0, max_i2=0;
+                for(int i=0;i<rez_skan.length;i++){
+                    if (rez_skan_fin < abs(rez_skan[i])){
+                        rez_skan_fin = rez_skan[i];
+                        max_i = i;
+                    }
+                }
+                for(int i=0;i<rez_skan2.length;i++){
+                    if (rez_skan_fin2 < abs(rez_skan2[i])){
+                        rez_skan_fin2 = rez_skan2[i];
+                        max_i2 = i;
+                    }
+                }
+                double dist = abs(max_i - max_i2) / 8000 * 340 * 1000;
 
-                text_t.setText(Arrays.toString(argInit_real_T(inpBuff1, inpBuff2, inpBuff1.length, inpBuff2.length)));
-                mPlayer.start();
+                text_t.setText(Double.toString(rez_skan_fin)+" "+Double.toString(max_i) + "\n" + Double.toString(rez_skan_fin2)+" "+Double.toString(max_i2) + "\n" + Double.toString(dist));
+                //text_t.setText(Arrays.toString(argInit_real_T(vremena, testBuff1, vremena.length, testBuff1.length)));
+                mPlayer.start(); // игра звука
+                 */
             }
         });
 

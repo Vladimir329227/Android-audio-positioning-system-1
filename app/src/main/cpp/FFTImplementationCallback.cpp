@@ -2,862 +2,437 @@
 // File: FFTImplementationCallback.cpp
 //
 // MATLAB Coder version            : 5.1
-// C/C++ source code generated on  : 08-Apr-2024 22:06:09
+// C/C++ source code generated on  : 22-Jul-2024 14:53:53
 //
 
 // Include Files
 #include "FFTImplementationCallback.h"
-#include "rt_nonfinite.h"
-#include "coder_array.h"
 #include <cmath>
 
 // Function Definitions
 //
-// Arguments    : const ::coder::array<double, 1U> &x
-//                ::coder::array<creal_T, 1U> &y
-//                int nrowsx
-//                int nRows
-//                int nfft
-//                const ::coder::array<creal_T, 1U> &wwc
-//                const ::coder::array<double, 2U> &costab
-//                const ::coder::array<double, 2U> &sintab
-//                const ::coder::array<double, 2U> &costabinv
-//                const ::coder::array<double, 2U> &sintabinv
+// Arguments    : int bitrevIndex[131072]
 // Return Type  : void
 //
 namespace coder
 {
   namespace internal
   {
-    void FFTImplementationCallback::doHalfLengthBluestein(const ::coder::array<
-      double, 1U> &x, ::coder::array<creal_T, 1U> &y, int nrowsx, int nRows, int
-      nfft, const ::coder::array<creal_T, 1U> &wwc, const ::coder::array<double,
-      2U> &costab, const ::coder::array<double, 2U> &sintab, const ::coder::
-      array<double, 2U> &costabinv, const ::coder::array<double, 2U> &sintabinv)
+    void FFTImplementationCallback::get_bitrevIndex(int bitrevIndex[131072])
     {
-      array<creal_T, 1U> fv;
-      array<creal_T, 1U> fy;
-      array<creal_T, 1U> reconVar1;
-      array<creal_T, 1U> reconVar2;
-      array<creal_T, 1U> ytmp;
-      array<double, 2U> b_costab;
-      array<double, 2U> b_sintab;
-      array<double, 2U> costab1q;
-      array<double, 2U> hcostabinv;
-      array<double, 2U> hsintab;
-      array<double, 2U> hsintabinv;
-      array<int, 2U> wrapIndex;
-      double e;
-      double temp_im;
-      double temp_re;
-      double twid_im;
-      double twid_re;
-      double z;
-      int hnRows;
-      int i;
-      int iDelta2;
-      int ihi;
-      int ix;
-      int j;
-      int ju;
-      int k;
-      int nRowsD2;
-      int nd2;
-      int temp_re_tmp;
-      boolean_T tst;
-      hnRows = nRows / 2;
-      ytmp.set_size(hnRows);
-      if (hnRows > nrowsx) {
-        ytmp.set_size(hnRows);
-        for (iDelta2 = 0; iDelta2 < hnRows; iDelta2++) {
-          ytmp[iDelta2].re = 0.0;
-          ytmp[iDelta2].im = 0.0;
-        }
-      }
-
-      if ((x.size(0) & 1) == 0) {
-        tst = true;
-        ju = x.size(0);
-      } else if (x.size(0) >= nRows) {
-        tst = true;
-        ju = nRows;
-      } else {
-        tst = false;
-        ju = x.size(0) - 1;
-      }
-
-      if (ju >= nRows) {
-        ju = nRows;
-      }
-
-      nd2 = nRows << 1;
-      e = 6.2831853071795862 / static_cast<double>(nd2);
-      ihi = nd2 / 2 / 2;
-      costab1q.set_size(1, (ihi + 1));
-      costab1q[0] = 1.0;
-      nd2 = ihi / 2 - 1;
-      for (k = 0; k <= nd2; k++) {
-        costab1q[k + 1] = std::cos(e * (static_cast<double>(k) + 1.0));
-      }
-
-      iDelta2 = nd2 + 2;
-      nd2 = ihi - 1;
-      for (k = iDelta2; k <= nd2; k++) {
-        costab1q[k] = std::sin(e * static_cast<double>(ihi - k));
-      }
-
-      costab1q[ihi] = 0.0;
-      ihi = costab1q.size(1) - 1;
-      nd2 = (costab1q.size(1) - 1) << 1;
-      b_costab.set_size(1, (nd2 + 1));
-      b_sintab.set_size(1, (nd2 + 1));
-      b_costab[0] = 1.0;
-      b_sintab[0] = 0.0;
-      for (k = 0; k < ihi; k++) {
-        b_costab[k + 1] = costab1q[k + 1];
-        b_sintab[k + 1] = -costab1q[(ihi - k) - 1];
-      }
-
-      iDelta2 = costab1q.size(1);
-      for (k = iDelta2; k <= nd2; k++) {
-        b_costab[k] = -costab1q[nd2 - k];
-        b_sintab[k] = -costab1q[k - ihi];
-      }
-
-      nd2 = costab.size(1) / 2;
-      costab1q.set_size(1, nd2);
-      hsintab.set_size(1, nd2);
-      hcostabinv.set_size(1, nd2);
-      hsintabinv.set_size(1, nd2);
-      for (i = 0; i < nd2; i++) {
-        iDelta2 = ((i + 1) << 1) - 2;
-        costab1q[i] = costab[iDelta2];
-        hsintab[i] = sintab[iDelta2];
-        hcostabinv[i] = costabinv[iDelta2];
-        hsintabinv[i] = sintabinv[iDelta2];
-      }
-
-      reconVar1.set_size(hnRows);
-      reconVar2.set_size(hnRows);
-      nd2 = 0;
-      wrapIndex.set_size(1, hnRows);
-      for (i = 0; i < hnRows; i++) {
-        reconVar1[i].re = b_sintab[nd2] + 1.0;
-        reconVar1[i].im = -b_costab[nd2];
-        reconVar2[i].re = 1.0 - b_sintab[nd2];
-        reconVar2[i].im = b_costab[nd2];
-        nd2 += 2;
-        if (i + 1 != 1) {
-          wrapIndex[i] = (hnRows - i) + 1;
-        } else {
-          wrapIndex[0] = 1;
-        }
-      }
-
-      nd2 = 0;
-      e = static_cast<double>(ju) / 2.0;
-      iDelta2 = static_cast<int>(e);
-      for (ix = 0; ix < iDelta2; ix++) {
-        temp_re_tmp = (hnRows + ix) - 1;
-        temp_re = wwc[temp_re_tmp].re;
-        temp_im = wwc[temp_re_tmp].im;
-        twid_re = x[nd2];
-        twid_im = x[nd2 + 1];
-        ytmp[ix].re = temp_re * twid_re + temp_im * twid_im;
-        ytmp[ix].im = temp_re * twid_im - temp_im * twid_re;
-        nd2 += 2;
-      }
-
-      if (!tst) {
-        temp_re_tmp = (hnRows + static_cast<int>(e)) - 1;
-        temp_re = wwc[temp_re_tmp].re;
-        temp_im = wwc[temp_re_tmp].im;
-        twid_re = x[nd2];
-        ytmp[static_cast<int>(static_cast<double>(ju) / 2.0)].re = temp_re *
-          twid_re + temp_im * 0.0;
-        ytmp[static_cast<int>(static_cast<double>(ju) / 2.0)].im = temp_re * 0.0
-          - temp_im * twid_re;
-        if (static_cast<int>(e) + 2 <= hnRows) {
-          iDelta2 = static_cast<int>(static_cast<double>(ju) / 2.0) + 2;
-          for (i = iDelta2; i <= hnRows; i++) {
-            ytmp[i - 1].re = 0.0;
-            ytmp[i - 1].im = 0.0;
-          }
-        }
-      } else {
-        if (static_cast<int>(e) + 1 <= hnRows) {
-          iDelta2 = static_cast<int>(static_cast<double>(ju) / 2.0) + 1;
-          for (i = iDelta2; i <= hnRows; i++) {
-            ytmp[i - 1].re = 0.0;
-            ytmp[i - 1].im = 0.0;
-          }
-        }
-      }
-
-      z = static_cast<double>(nfft) / 2.0;
-      fy.set_size((static_cast<int>(z)));
-      if (static_cast<int>(z) > ytmp.size(0)) {
-        nd2 = static_cast<int>(z);
-        fy.set_size((static_cast<int>(z)));
-        for (iDelta2 = 0; iDelta2 < nd2; iDelta2++) {
-          fy[iDelta2].re = 0.0;
-          fy[iDelta2].im = 0.0;
-        }
-      }
-
-      ju = ytmp.size(0);
-      j = static_cast<int>(z);
-      if (ju < j) {
-        j = ju;
-      }
-
-      iDelta2 = static_cast<int>(z) - 2;
-      nRowsD2 = static_cast<int>(z) / 2;
-      k = nRowsD2 / 2;
-      ix = 0;
-      nd2 = 0;
-      ju = 0;
-      for (i = 0; i <= j - 2; i++) {
-        fy[nd2] = ytmp[ix];
-        ihi = static_cast<int>(z);
-        tst = true;
-        while (tst) {
-          ihi >>= 1;
-          ju ^= ihi;
-          tst = ((ju & ihi) == 0);
-        }
-
-        nd2 = ju;
-        ix++;
-      }
-
-      fy[nd2] = ytmp[ix];
-      if (static_cast<int>(z) > 1) {
-        for (i = 0; i <= iDelta2; i += 2) {
-          temp_re = fy[i + 1].re;
-          temp_im = fy[i + 1].im;
-          e = fy[i].re;
-          twid_re = fy[i].im;
-          fy[i + 1].re = fy[i].re - fy[i + 1].re;
-          fy[i + 1].im = fy[i].im - fy[i + 1].im;
-          e += temp_re;
-          twid_re += temp_im;
-          fy[i].re = e;
-          fy[i].im = twid_re;
-        }
-      }
-
-      nd2 = 2;
-      iDelta2 = 4;
-      ix = ((k - 1) << 2) + 1;
-      while (k > 0) {
-        for (i = 0; i < ix; i += iDelta2) {
-          temp_re_tmp = i + nd2;
-          temp_re = fy[temp_re_tmp].re;
-          temp_im = fy[temp_re_tmp].im;
-          fy[temp_re_tmp].re = fy[i].re - temp_re;
-          fy[temp_re_tmp].im = fy[i].im - temp_im;
-          fy[i].re = fy[i].re + temp_re;
-          fy[i].im = fy[i].im + temp_im;
-        }
-
-        ju = 1;
-        for (j = k; j < nRowsD2; j += k) {
-          twid_re = costab1q[j];
-          twid_im = hsintab[j];
-          i = ju;
-          ihi = ju + ix;
-          while (i < ihi) {
-            temp_re_tmp = i + nd2;
-            temp_re = twid_re * fy[temp_re_tmp].re - twid_im * fy[temp_re_tmp].
-              im;
-            temp_im = twid_re * fy[temp_re_tmp].im + twid_im * fy[temp_re_tmp].
-              re;
-            fy[temp_re_tmp].re = fy[i].re - temp_re;
-            fy[temp_re_tmp].im = fy[i].im - temp_im;
-            fy[i].re = fy[i].re + temp_re;
-            fy[i].im = fy[i].im + temp_im;
-            i += iDelta2;
-          }
-
-          ju++;
-        }
-
-        k /= 2;
-        nd2 = iDelta2;
-        iDelta2 += iDelta2;
-        ix -= nd2;
-      }
-
-      FFTImplementationCallback::r2br_r2dit_trig_impl((wwc), (static_cast<int>(
-        static_cast<double>(nfft) / 2.0)), (costab1q), (hsintab), (fv));
-      nd2 = fy.size(0);
-      for (iDelta2 = 0; iDelta2 < nd2; iDelta2++) {
-        twid_re = fy[iDelta2].re * fv[iDelta2].im + fy[iDelta2].im * fv[iDelta2]
-          .re;
-        fy[iDelta2].re = fy[iDelta2].re * fv[iDelta2].re - fy[iDelta2].im *
-          fv[iDelta2].im;
-        fy[iDelta2].im = twid_re;
-      }
-
-      FFTImplementationCallback::r2br_r2dit_trig_impl((fy), (static_cast<int>(z)),
-        (hcostabinv), (hsintabinv), (fv));
-      if (fv.size(0) > 1) {
-        e = 1.0 / static_cast<double>(fv.size(0));
-        nd2 = fv.size(0);
-        for (iDelta2 = 0; iDelta2 < nd2; iDelta2++) {
-          fv[iDelta2].re = e * fv[iDelta2].re;
-          fv[iDelta2].im = e * fv[iDelta2].im;
-        }
-      }
-
-      nd2 = 0;
-      iDelta2 = wwc.size(0);
-      for (k = hnRows; k <= iDelta2; k++) {
-        ytmp[nd2].re = wwc[k - 1].re * fv[k - 1].re + wwc[k - 1].im * fv[k - 1].
-          im;
-        ytmp[nd2].im = wwc[k - 1].re * fv[k - 1].im - wwc[k - 1].im * fv[k - 1].
-          re;
-        nd2++;
-      }
-
-      for (i = 0; i < hnRows; i++) {
-        iDelta2 = wrapIndex[i];
-        e = ytmp[iDelta2 - 1].re;
-        twid_re = -ytmp[iDelta2 - 1].im;
-        y[i].re = 0.5 * ((ytmp[i].re * reconVar1[i].re - ytmp[i].im *
-                          reconVar1[i].im) + (e * reconVar2[i].re - twid_re *
-          reconVar2[i].im));
-        y[i].im = 0.5 * ((ytmp[i].re * reconVar1[i].im + ytmp[i].im *
-                          reconVar1[i].re) + (e * reconVar2[i].im + twid_re *
-          reconVar2[i].re));
-        iDelta2 = hnRows + i;
-        y[iDelta2].re = 0.5 * ((ytmp[i].re * reconVar2[i].re - ytmp[i].im *
-          reconVar2[i].im) + (e * reconVar1[i].re - twid_re * reconVar1[i].im));
-        y[iDelta2].im = 0.5 * ((ytmp[i].re * reconVar2[i].im + ytmp[i].im *
-          reconVar2[i].re) + (e * reconVar1[i].im + twid_re * reconVar1[i].re));
-      }
-    }
-
-    //
-    // Arguments    : const ::coder::array<double, 1U> &x
-    //                ::coder::array<creal_T, 1U> &y
-    //                int unsigned_nRows
-    //                const ::coder::array<double, 2U> &costab
-    //                const ::coder::array<double, 2U> &sintab
-    // Return Type  : void
-    //
-    void FFTImplementationCallback::doHalfLengthRadix2(const ::coder::array<
-      double, 1U> &x, ::coder::array<creal_T, 1U> &y, int unsigned_nRows, const ::
-      coder::array<double, 2U> &costab, const ::coder::array<double, 2U> &sintab)
-    {
-      array<creal_T, 1U> reconVar1;
-      array<creal_T, 1U> reconVar2;
-      array<double, 2U> hcostab;
-      array<double, 2U> hsintab;
-      array<int, 2U> wrapIndex;
-      array<int, 1U> bitrevIndex;
-      double temp2_im;
-      double temp2_re;
-      double temp_im;
-      double temp_re;
-      double y_im;
-      double y_im_tmp;
-      double z;
-      int hszCostab;
-      int i;
-      int ihi;
-      int istart;
       int iy;
       int ju;
-      int k;
-      int nRows;
-      int nRowsD2;
-      int nRowsM2;
-      boolean_T tst;
-      nRows = unsigned_nRows / 2;
-      ihi = y.size(0);
-      if (ihi >= nRows) {
-        ihi = nRows;
-      }
-
-      nRowsM2 = nRows - 2;
-      nRowsD2 = nRows / 2;
-      k = nRowsD2 / 2;
-      hszCostab = costab.size(1) / 2;
-      hcostab.set_size(1, hszCostab);
-      hsintab.set_size(1, hszCostab);
-      for (i = 0; i < hszCostab; i++) {
-        iy = ((i + 1) << 1) - 2;
-        hcostab[i] = costab[iy];
-        hsintab[i] = sintab[iy];
-      }
-
-      reconVar1.set_size(nRows);
-      reconVar2.set_size(nRows);
-      wrapIndex.set_size(1, nRows);
-      for (i = 0; i < nRows; i++) {
-        temp2_im = sintab[i];
-        temp2_re = costab[i];
-        reconVar1[i].re = temp2_im + 1.0;
-        reconVar1[i].im = -temp2_re;
-        reconVar2[i].re = 1.0 - temp2_im;
-        reconVar2[i].im = temp2_re;
-        if (i + 1 != 1) {
-          wrapIndex[i] = (nRows - i) + 1;
-        } else {
-          wrapIndex[0] = 1;
-        }
-      }
-
-      z = static_cast<double>(unsigned_nRows) / 2.0;
       ju = 0;
       iy = 1;
-      bitrevIndex.set_size((static_cast<int>(z)));
-      hszCostab = static_cast<int>(z);
-      for (istart = 0; istart < hszCostab; istart++) {
-        bitrevIndex[istart] = 0;
-      }
-
-      for (istart = 0; istart <= ihi - 2; istart++) {
-        bitrevIndex[istart] = iy;
-        hszCostab = static_cast<int>(z);
+      for (int b_j1 = 0; b_j1 < 131071; b_j1++) {
+        bool tst;
+        bitrevIndex[b_j1] = iy;
+        iy = 131072;
         tst = true;
         while (tst) {
-          hszCostab >>= 1;
-          ju ^= hszCostab;
-          tst = ((ju & hszCostab) == 0);
+          iy >>= 1;
+          ju ^= iy;
+          tst = ((ju & iy) == 0);
         }
 
         iy = ju + 1;
       }
 
-      bitrevIndex[ihi - 1] = iy;
-      if ((x.size(0) & 1) == 0) {
-        tst = true;
-        ihi = x.size(0);
-      } else if (x.size(0) >= unsigned_nRows) {
-        tst = true;
-        ihi = unsigned_nRows;
-      } else {
-        tst = false;
-        ihi = x.size(0) - 1;
+      bitrevIndex[131071] = iy;
+    }
+
+    //
+    // Arguments    : creal_T y[262144]
+    //                int yoff
+    //                const creal_T reconVar1[131072]
+    //                const creal_T reconVar2[131072]
+    //                const int wrapIndex[131072]
+    //                int hnRows
+    // Return Type  : void
+    //
+    void FFTImplementationCallback::getback_radix2_fft(creal_T y[262144], int
+      yoff, const creal_T reconVar1[131072], const creal_T reconVar2[131072],
+      const int wrapIndex[131072], int hnRows)
+    {
+      double d;
+      double d1;
+      double temp1_im;
+      double temp1_re;
+      double temp2_im;
+      double temp2_re;
+      int i;
+      int iterVar;
+      int temp1_re_tmp;
+      iterVar = hnRows / 2;
+      temp2_re = y[yoff].re;
+      temp1_im = y[yoff].im;
+      temp2_im = y[yoff].re * reconVar1[0].im + y[yoff].im * reconVar1[0].re;
+      temp1_re = -y[yoff].im;
+      d = temp2_re * reconVar2[0].re;
+      y[yoff].re = 0.5 * ((y[yoff].re * reconVar1[0].re - y[yoff].im *
+                           reconVar1[0].im) + (d - temp1_re * reconVar2[0].im));
+      d1 = temp2_re * reconVar2[0].im;
+      y[yoff].im = 0.5 * (temp2_im + (d1 + temp1_re * reconVar2[0].re));
+      i = yoff + hnRows;
+      y[i].re = 0.5 * ((d - temp1_im * reconVar2[0].im) + (temp2_re * reconVar1
+        [0].re - -temp1_im * reconVar1[0].im));
+      y[i].im = 0.5 * ((d1 + temp1_im * reconVar2[0].re) + (temp2_re *
+        reconVar1[0].im + -temp1_im * reconVar1[0].re));
+      for (int b_i = 2; b_i <= iterVar; b_i++) {
+        int b_temp2_re_tmp_tmp;
+        int temp2_re_tmp_tmp;
+        temp1_re_tmp = (yoff + b_i) - 1;
+        temp1_re = y[temp1_re_tmp].re;
+        temp1_im = y[temp1_re_tmp].im;
+        temp2_re_tmp_tmp = wrapIndex[b_i - 1];
+        b_temp2_re_tmp_tmp = yoff + temp2_re_tmp_tmp;
+        temp2_re = y[b_temp2_re_tmp_tmp - 1].re;
+        temp2_im = y[b_temp2_re_tmp_tmp - 1].im;
+        y[temp1_re_tmp].re = 0.5 * ((temp1_re * reconVar1[b_i - 1].re - temp1_im
+          * reconVar1[b_i - 1].im) + (temp2_re * reconVar2[b_i - 1].re -
+          -temp2_im * reconVar2[b_i - 1].im));
+        y[temp1_re_tmp].im = 0.5 * ((temp1_re * reconVar1[b_i - 1].im + temp1_im
+          * reconVar1[b_i - 1].re) + (temp2_re * reconVar2[b_i - 1].im +
+          -temp2_im * reconVar2[b_i - 1].re));
+        temp1_re_tmp = (i + b_i) - 1;
+        y[temp1_re_tmp].re = 0.5 * ((temp1_re * reconVar2[b_i - 1].re - temp1_im
+          * reconVar2[b_i - 1].im) + (temp2_re * reconVar1[b_i - 1].re -
+          -temp2_im * reconVar1[b_i - 1].im));
+        y[temp1_re_tmp].im = 0.5 * ((temp1_re * reconVar2[b_i - 1].im + temp1_im
+          * reconVar2[b_i - 1].re) + (temp2_re * reconVar1[b_i - 1].im +
+          -temp2_im * reconVar1[b_i - 1].re));
+        y[b_temp2_re_tmp_tmp - 1].re = 0.5 * ((temp2_re *
+          reconVar1[temp2_re_tmp_tmp - 1].re - temp2_im *
+          reconVar1[temp2_re_tmp_tmp - 1].im) + (temp1_re *
+          reconVar2[temp2_re_tmp_tmp - 1].re - -temp1_im *
+          reconVar2[temp2_re_tmp_tmp - 1].im));
+        y[b_temp2_re_tmp_tmp - 1].im = 0.5 * ((temp2_re *
+          reconVar1[temp2_re_tmp_tmp - 1].im + temp2_im *
+          reconVar1[temp2_re_tmp_tmp - 1].re) + (temp1_re *
+          reconVar2[temp2_re_tmp_tmp - 1].im + -temp1_im *
+          reconVar2[temp2_re_tmp_tmp - 1].re));
+        temp1_re_tmp = (b_temp2_re_tmp_tmp + hnRows) - 1;
+        y[temp1_re_tmp].re = 0.5 * ((temp2_re * reconVar2[temp2_re_tmp_tmp - 1].
+          re - temp2_im * reconVar2[temp2_re_tmp_tmp - 1].im) + (temp1_re *
+          reconVar1[temp2_re_tmp_tmp - 1].re - -temp1_im *
+          reconVar1[temp2_re_tmp_tmp - 1].im));
+        y[temp1_re_tmp].im = 0.5 * ((temp2_re * reconVar2[temp2_re_tmp_tmp - 1].
+          im + temp2_im * reconVar2[temp2_re_tmp_tmp - 1].re) + (temp1_re *
+          reconVar1[temp2_re_tmp_tmp - 1].im + -temp1_im *
+          reconVar1[temp2_re_tmp_tmp - 1].re));
       }
 
-      hszCostab = 0;
-      if (ihi >= unsigned_nRows) {
-        ihi = unsigned_nRows;
+      if (iterVar != 0) {
+        temp1_re_tmp = yoff + iterVar;
+        temp1_re = y[temp1_re_tmp].re;
+        temp1_im = y[temp1_re_tmp].im;
+        d = temp1_re * reconVar2[iterVar].re;
+        d1 = temp1_re * reconVar1[iterVar].re;
+        y[temp1_re_tmp].re = 0.5 * ((d1 - temp1_im * reconVar1[iterVar].im) + (d
+          - -temp1_im * reconVar2[iterVar].im));
+        temp2_im = temp1_re * reconVar2[iterVar].im;
+        temp2_re = temp1_re * reconVar1[iterVar].im;
+        y[temp1_re_tmp].im = 0.5 * ((temp2_re + temp1_im * reconVar1[iterVar].re)
+          + (temp2_im + -temp1_im * reconVar2[iterVar].re));
+        i += iterVar;
+        y[i].re = 0.5 * ((d - temp1_im * reconVar2[iterVar].im) + (d1 -
+          -temp1_im * reconVar1[iterVar].im));
+        y[i].im = 0.5 * ((temp2_im + temp1_im * reconVar2[iterVar].re) +
+                         (temp2_re + -temp1_im * reconVar1[iterVar].re));
+      }
+    }
+
+    //
+    // Arguments    : const double x[96000]
+    //                int xoffInit
+    //                creal_T y[262144]
+    //                const double costab[131073]
+    //                const double sintab[131073]
+    // Return Type  : void
+    //
+    void FFTImplementationCallback::b_doHalfLengthRadix2(const double x[96000],
+      int xoffInit, creal_T y[262144], const double costab[131073], const double
+      sintab[131073])
+    {
+      static creal_T reconVar1[131072];
+      static creal_T reconVar2[131072];
+      static double hcostab[65536];
+      static double hsintab[65536];
+      static int bitrevIndex[131072];
+      static int wrapIndex[131072];
+      double temp_im;
+      double temp_re;
+      int i;
+      int iDelta2;
+      int iheight;
+      int ix;
+      int j;
+      int k;
+      for (i = 0; i < 65536; i++) {
+        ix = ((i + 1) << 1) - 2;
+        hcostab[i] = costab[ix];
+        hsintab[i] = sintab[ix];
       }
 
-      temp2_im = static_cast<double>(ihi) / 2.0;
-      istart = static_cast<int>(temp2_im);
-      for (i = 0; i < istart; i++) {
-        y[bitrevIndex[i] - 1].re = x[hszCostab];
-        y[bitrevIndex[i] - 1].im = x[hszCostab + 1];
-        hszCostab += 2;
-      }
-
-      if (!tst) {
-        istart = bitrevIndex[static_cast<int>(temp2_im)] - 1;
-        y[istart].re = x[hszCostab];
-        y[istart].im = 0.0;
-      }
-
-      if (nRows > 1) {
-        for (i = 0; i <= nRowsM2; i += 2) {
-          temp_re = y[i + 1].re;
-          temp_im = y[i + 1].im;
-          y[i + 1].re = y[i].re - y[i + 1].re;
-          y[i + 1].im = y[i].im - y[i + 1].im;
-          y[i].re = y[i].re + temp_re;
-          y[i].im = y[i].im + temp_im;
+      for (i = 0; i < 131072; i++) {
+        temp_re = sintab[i];
+        reconVar1[i].re = temp_re + 1.0;
+        temp_im = costab[i];
+        reconVar1[i].im = -temp_im;
+        reconVar2[i].re = 1.0 - temp_re;
+        reconVar2[i].im = temp_im;
+        if (i + 1 != 1) {
+          wrapIndex[i] = 131073 - i;
+        } else {
+          wrapIndex[0] = 1;
         }
       }
 
-      hszCostab = 2;
-      iy = 4;
-      ju = ((k - 1) << 2) + 1;
+      FFTImplementationCallback::get_bitrevIndex((bitrevIndex));
+      ix = xoffInit;
+      for (i = 0; i < 48000; i++) {
+        iDelta2 = bitrevIndex[i];
+        y[iDelta2 - 1].re = x[ix];
+        y[iDelta2 - 1].im = x[ix + 1];
+        ix += 2;
+      }
+
+      for (i = 0; i <= 131070; i += 2) {
+        temp_re = y[i + 1].re;
+        temp_im = y[i + 1].im;
+        y[i + 1].re = y[i].re - y[i + 1].re;
+        y[i + 1].im = y[i].im - y[i + 1].im;
+        y[i].re += temp_re;
+        y[i].im += temp_im;
+      }
+
+      ix = 2;
+      iDelta2 = 4;
+      k = 32768;
+      iheight = 131069;
       while (k > 0) {
-        for (i = 0; i < ju; i += iy) {
-          nRowsM2 = i + hszCostab;
-          temp_re = y[nRowsM2].re;
-          temp_im = y[nRowsM2].im;
-          y[nRowsM2].re = y[i].re - temp_re;
-          y[nRowsM2].im = y[i].im - temp_im;
-          y[i].re = y[i].re + temp_re;
-          y[i].im = y[i].im + temp_im;
+        int istart;
+        int temp_re_tmp;
+        for (i = 0; i < iheight; i += iDelta2) {
+          temp_re_tmp = i + ix;
+          temp_re = y[temp_re_tmp].re;
+          temp_im = y[temp_re_tmp].im;
+          y[temp_re_tmp].re = y[i].re - temp_re;
+          y[temp_re_tmp].im = y[i].im - temp_im;
+          y[i].re += temp_re;
+          y[i].im += temp_im;
         }
 
         istart = 1;
-        for (nRows = k; nRows < nRowsD2; nRows += k) {
-          temp2_re = hcostab[nRows];
-          temp2_im = hsintab[nRows];
+        for (j = k; j < 65536; j += k) {
+          double twid_im;
+          double twid_re;
+          int ihi;
+          twid_re = hcostab[j];
+          twid_im = hsintab[j];
           i = istart;
-          ihi = istart + ju;
+          ihi = istart + iheight;
           while (i < ihi) {
-            nRowsM2 = i + hszCostab;
-            temp_re = temp2_re * y[nRowsM2].re - temp2_im * y[nRowsM2].im;
-            temp_im = temp2_re * y[nRowsM2].im + temp2_im * y[nRowsM2].re;
-            y[nRowsM2].re = y[i].re - temp_re;
-            y[nRowsM2].im = y[i].im - temp_im;
-            y[i].re = y[i].re + temp_re;
-            y[i].im = y[i].im + temp_im;
-            i += iy;
+            temp_re_tmp = i + ix;
+            temp_re = twid_re * y[temp_re_tmp].re - twid_im * y[temp_re_tmp].im;
+            temp_im = twid_re * y[temp_re_tmp].im + twid_im * y[temp_re_tmp].re;
+            y[temp_re_tmp].re = y[i].re - temp_re;
+            y[temp_re_tmp].im = y[i].im - temp_im;
+            y[i].re += temp_re;
+            y[i].im += temp_im;
+            i += iDelta2;
           }
 
           istart++;
         }
 
         k /= 2;
-        hszCostab = iy;
-        iy += iy;
-        ju -= hszCostab;
+        ix = iDelta2;
+        iDelta2 += iDelta2;
+        iheight -= ix;
       }
 
-      hszCostab = static_cast<int>(z) / 2;
-      temp_re = y[0].re;
-      temp_im = y[0].im;
-      y_im = y[0].re * reconVar1[0].im + y[0].im * reconVar1[0].re;
-      temp2_re = y[0].re;
-      temp2_im = -y[0].im;
-      y[0].re = 0.5 * ((y[0].re * reconVar1[0].re - y[0].im * reconVar1[0].im) +
-                       (temp2_re * reconVar2[0].re - temp2_im * reconVar2[0].im));
-      y[0].im = 0.5 * (y_im + (temp2_re * reconVar2[0].im + temp2_im *
-        reconVar2[0].re));
-      y[static_cast<int>(z)].re = 0.5 * ((temp_re * reconVar2[0].re - temp_im *
-        reconVar2[0].im) + (temp_re * reconVar1[0].re - -temp_im * reconVar1[0].
-                            im));
-      y[static_cast<int>(z)].im = 0.5 * ((temp_re * reconVar2[0].im + temp_im *
-        reconVar2[0].re) + (temp_re * reconVar1[0].im + -temp_im * reconVar1[0].
-                            re));
-      for (i = 2; i <= hszCostab; i++) {
-        temp_re = y[i - 1].re;
-        temp_im = y[i - 1].im;
-        istart = wrapIndex[i - 1];
-        temp2_re = y[istart - 1].re;
-        temp2_im = y[istart - 1].im;
-        y_im = y[i - 1].re * reconVar1[i - 1].im + y[i - 1].im * reconVar1[i - 1]
-          .re;
-        y_im_tmp = -y[istart - 1].im;
-        y[i - 1].re = 0.5 * ((y[i - 1].re * reconVar1[i - 1].re - y[i - 1].im *
-                              reconVar1[i - 1].im) + (temp2_re * reconVar2[i - 1]
-          .re - y_im_tmp * reconVar2[i - 1].im));
-        y[i - 1].im = 0.5 * (y_im + (temp2_re * reconVar2[i - 1].im + y_im_tmp *
-          reconVar2[i - 1].re));
-        iy = (static_cast<int>(z) + i) - 1;
-        y[iy].re = 0.5 * ((temp_re * reconVar2[i - 1].re - temp_im * reconVar2[i
-                           - 1].im) + (temp2_re * reconVar1[i - 1].re -
-          -temp2_im * reconVar1[i - 1].im));
-        y[iy].im = 0.5 * ((temp_re * reconVar2[i - 1].im + temp_im * reconVar2[i
-                           - 1].re) + (temp2_re * reconVar1[i - 1].im +
-          -temp2_im * reconVar1[i - 1].re));
-        y[istart - 1].re = 0.5 * ((temp2_re * reconVar1[istart - 1].re -
-          temp2_im * reconVar1[istart - 1].im) + (temp_re * reconVar2[istart - 1]
-          .re - -temp_im * reconVar2[istart - 1].im));
-        y[istart - 1].im = 0.5 * ((temp2_re * reconVar1[istart - 1].im +
-          temp2_im * reconVar1[istart - 1].re) + (temp_re * reconVar2[istart - 1]
-          .im + -temp_im * reconVar2[istart - 1].re));
-        iy = (istart + static_cast<int>(z)) - 1;
-        y[iy].re = 0.5 * ((temp2_re * reconVar2[istart - 1].re - temp2_im *
-                           reconVar2[istart - 1].im) + (temp_re *
-          reconVar1[istart - 1].re - -temp_im * reconVar1[istart - 1].im));
-        y[iy].im = 0.5 * ((temp2_re * reconVar2[istart - 1].im + temp2_im *
-                           reconVar2[istart - 1].re) + (temp_re *
-          reconVar1[istart - 1].im + -temp_im * reconVar1[istart - 1].re));
-      }
-
-      if (hszCostab != 0) {
-        temp2_im = y[hszCostab].re;
-        temp_im = y[hszCostab].im;
-        y_im = y[hszCostab].re * reconVar1[hszCostab].im + y[hszCostab].im *
-          reconVar1[hszCostab].re;
-        y_im_tmp = -y[hszCostab].im;
-        y[hszCostab].re = 0.5 * ((y[hszCostab].re * reconVar1[hszCostab].re -
-          y[hszCostab].im * reconVar1[hszCostab].im) + (temp2_im *
-          reconVar2[hszCostab].re - y_im_tmp * reconVar2[hszCostab].im));
-        y[hszCostab].im = 0.5 * (y_im + (temp2_im * reconVar2[hszCostab].im +
-          y_im_tmp * reconVar2[hszCostab].re));
-        istart = static_cast<int>(z) + hszCostab;
-        y[istart].re = 0.5 * ((temp2_im * reconVar2[hszCostab].re - temp_im *
-          reconVar2[hszCostab].im) + (temp2_im * reconVar1[hszCostab].re -
-          -temp_im * reconVar1[hszCostab].im));
-        y[istart].im = 0.5 * ((temp2_im * reconVar2[hszCostab].im + temp_im *
-          reconVar2[hszCostab].re) + (temp2_im * reconVar1[hszCostab].im +
-          -temp_im * reconVar1[hszCostab].re));
-      }
+      FFTImplementationCallback::getback_radix2_fft((y), (0), (reconVar1),
+        (reconVar2), (wrapIndex), (131072));
     }
 
     //
-    // Arguments    : const ::coder::array<double, 1U> &x
-    //                int n2blue
-    //                int nfft
-    //                const ::coder::array<double, 2U> &costab
-    //                const ::coder::array<double, 2U> &sintab
-    //                const ::coder::array<double, 2U> &sintabinv
-    //                ::coder::array<creal_T, 1U> &y
+    // Arguments    : const double x[10000]
+    //                int xoffInit
+    //                creal_T y[262144]
+    //                const double costab[131073]
+    //                const double sintab[131073]
     // Return Type  : void
     //
-    void FFTImplementationCallback::dobluesteinfft(const ::coder::array<double,
-      1U> &x, int n2blue, int nfft, const ::coder::array<double, 2U> &costab,
-      const ::coder::array<double, 2U> &sintab, const ::coder::array<double, 2U>
-      &sintabinv, ::coder::array<creal_T, 1U> &y)
+    void FFTImplementationCallback::doHalfLengthRadix2(const double x[10000],
+      int xoffInit, creal_T y[262144], const double costab[131073], const double
+      sintab[131073])
     {
-      array<creal_T, 1U> b_fv;
-      array<creal_T, 1U> fv;
-      array<creal_T, 1U> wwc;
-      double nt_re;
-      int idx;
+      static creal_T reconVar1[131072];
+      static creal_T reconVar2[131072];
+      static double hcostab[65536];
+      static double hsintab[65536];
+      static int bitrevIndex[131072];
+      static int wrapIndex[131072];
+      double temp_im;
+      double temp_re;
+      int i;
+      int iDelta2;
+      int iheight;
+      int ix;
+      int j;
       int k;
-      int nInt2;
-      int nInt2m1;
-      int rt;
-      if ((nfft != 1) && ((nfft & 1) == 0)) {
-        int nRows;
-        nRows = nfft / 2;
-        nInt2m1 = (nRows + nRows) - 1;
-        wwc.set_size(nInt2m1);
-        idx = nRows;
-        rt = 0;
-        wwc[nRows - 1].re = 1.0;
-        wwc[nRows - 1].im = 0.0;
-        nInt2 = nRows << 1;
-        for (k = 0; k <= nRows - 2; k++) {
-          double nt_im;
-          int b_y;
-          b_y = ((k + 1) << 1) - 1;
-          if (nInt2 - rt <= b_y) {
-            rt += b_y - nInt2;
-          } else {
-            rt += b_y;
-          }
+      for (i = 0; i < 65536; i++) {
+        ix = ((i + 1) << 1) - 2;
+        hcostab[i] = costab[ix];
+        hsintab[i] = sintab[ix];
+      }
 
-          nt_im = -3.1415926535897931 * static_cast<double>(rt) / static_cast<
-            double>(nRows);
-          if (nt_im == 0.0) {
-            nt_re = 1.0;
-            nt_im = 0.0;
-          } else {
-            nt_re = std::cos(nt_im);
-            nt_im = std::sin(nt_im);
-          }
-
-          wwc[idx - 2].re = nt_re;
-          wwc[idx - 2].im = -nt_im;
-          idx--;
-        }
-
-        idx = 0;
-        rt = nInt2m1 - 1;
-        for (k = rt; k >= nRows; k--) {
-          wwc[k] = wwc[idx];
-          idx++;
-        }
-      } else {
-        nInt2m1 = (nfft + nfft) - 1;
-        wwc.set_size(nInt2m1);
-        idx = nfft;
-        rt = 0;
-        wwc[nfft - 1].re = 1.0;
-        wwc[nfft - 1].im = 0.0;
-        nInt2 = nfft << 1;
-        for (k = 0; k <= nfft - 2; k++) {
-          double nt_im;
-          int b_y;
-          b_y = ((k + 1) << 1) - 1;
-          if (nInt2 - rt <= b_y) {
-            rt += b_y - nInt2;
-          } else {
-            rt += b_y;
-          }
-
-          nt_im = -3.1415926535897931 * static_cast<double>(rt) / static_cast<
-            double>(nfft);
-          if (nt_im == 0.0) {
-            nt_re = 1.0;
-            nt_im = 0.0;
-          } else {
-            nt_re = std::cos(nt_im);
-            nt_im = std::sin(nt_im);
-          }
-
-          wwc[idx - 2].re = nt_re;
-          wwc[idx - 2].im = -nt_im;
-          idx--;
-        }
-
-        idx = 0;
-        rt = nInt2m1 - 1;
-        for (k = rt; k >= nfft; k--) {
-          wwc[k] = wwc[idx];
-          idx++;
+      for (i = 0; i < 131072; i++) {
+        temp_re = sintab[i];
+        reconVar1[i].re = temp_re + 1.0;
+        temp_im = costab[i];
+        reconVar1[i].im = -temp_im;
+        reconVar2[i].re = 1.0 - temp_re;
+        reconVar2[i].im = temp_im;
+        if (i + 1 != 1) {
+          wrapIndex[i] = 131073 - i;
+        } else {
+          wrapIndex[0] = 1;
         }
       }
 
-      y.set_size(nfft);
-      if (nfft > x.size(0)) {
-        y.set_size(nfft);
-        for (rt = 0; rt < nfft; rt++) {
-          y[rt].re = 0.0;
-          y[rt].im = 0.0;
-        }
+      FFTImplementationCallback::get_bitrevIndex((bitrevIndex));
+      ix = xoffInit;
+      for (i = 0; i < 5000; i++) {
+        iDelta2 = bitrevIndex[i];
+        y[iDelta2 - 1].re = x[ix];
+        y[iDelta2 - 1].im = x[ix + 1];
+        ix += 2;
       }
 
-      if ((n2blue != 1) && ((nfft & 1) == 0)) {
-        FFTImplementationCallback::doHalfLengthBluestein((x), (y), (x.size(0)),
-          (nfft), (n2blue), (wwc), (costab), (sintab), (costab), (sintabinv));
-      } else {
-        nInt2m1 = x.size(0);
-        if (nfft < nInt2m1) {
-          nInt2m1 = nfft;
+      for (i = 0; i <= 131070; i += 2) {
+        temp_re = y[i + 1].re;
+        temp_im = y[i + 1].im;
+        y[i + 1].re = y[i].re - y[i + 1].re;
+        y[i + 1].im = y[i].im - y[i + 1].im;
+        y[i].re += temp_re;
+        y[i].im += temp_im;
+      }
+
+      ix = 2;
+      iDelta2 = 4;
+      k = 32768;
+      iheight = 131069;
+      while (k > 0) {
+        int istart;
+        int temp_re_tmp;
+        for (i = 0; i < iheight; i += iDelta2) {
+          temp_re_tmp = i + ix;
+          temp_re = y[temp_re_tmp].re;
+          temp_im = y[temp_re_tmp].im;
+          y[temp_re_tmp].re = y[i].re - temp_re;
+          y[temp_re_tmp].im = y[i].im - temp_im;
+          y[i].re += temp_re;
+          y[i].im += temp_im;
         }
 
-        rt = 0;
-        for (k = 0; k < nInt2m1; k++) {
-          nInt2 = (nfft + k) - 1;
-          y[k].re = wwc[nInt2].re * x[rt];
-          y[k].im = wwc[nInt2].im * -x[rt];
-          rt++;
-        }
-
-        rt = nInt2m1 + 1;
-        for (k = rt; k <= nfft; k++) {
-          y[k - 1].re = 0.0;
-          y[k - 1].im = 0.0;
-        }
-
-        FFTImplementationCallback::r2br_r2dit_trig_impl((y), (n2blue), (costab),
-          (sintab), (fv));
-        FFTImplementationCallback::r2br_r2dit_trig_impl((wwc), (n2blue), (costab),
-          (sintab), (b_fv));
-        b_fv.set_size(fv.size(0));
-        nInt2m1 = fv.size(0);
-        for (rt = 0; rt < nInt2m1; rt++) {
-          nt_re = fv[rt].re * b_fv[rt].im + fv[rt].im * b_fv[rt].re;
-          b_fv[rt].re = fv[rt].re * b_fv[rt].re - fv[rt].im * b_fv[rt].im;
-          b_fv[rt].im = nt_re;
-        }
-
-        FFTImplementationCallback::r2br_r2dit_trig_impl((b_fv), (n2blue),
-          (costab), (sintabinv), (fv));
-        if (fv.size(0) > 1) {
-          nt_re = 1.0 / static_cast<double>(fv.size(0));
-          nInt2m1 = fv.size(0);
-          for (rt = 0; rt < nInt2m1; rt++) {
-            fv[rt].re = nt_re * fv[rt].re;
-            fv[rt].im = nt_re * fv[rt].im;
+        istart = 1;
+        for (j = k; j < 65536; j += k) {
+          double twid_im;
+          double twid_re;
+          int ihi;
+          twid_re = hcostab[j];
+          twid_im = hsintab[j];
+          i = istart;
+          ihi = istart + iheight;
+          while (i < ihi) {
+            temp_re_tmp = i + ix;
+            temp_re = twid_re * y[temp_re_tmp].re - twid_im * y[temp_re_tmp].im;
+            temp_im = twid_re * y[temp_re_tmp].im + twid_im * y[temp_re_tmp].re;
+            y[temp_re_tmp].re = y[i].re - temp_re;
+            y[temp_re_tmp].im = y[i].im - temp_im;
+            y[i].re += temp_re;
+            y[i].im += temp_im;
+            i += iDelta2;
           }
+
+          istart++;
         }
 
-        idx = 0;
-        rt = wwc.size(0);
-        for (k = nfft; k <= rt; k++) {
-          y[idx].re = wwc[k - 1].re * fv[k - 1].re + wwc[k - 1].im * fv[k - 1].
-            im;
-          y[idx].im = wwc[k - 1].re * fv[k - 1].im - wwc[k - 1].im * fv[k - 1].
-            re;
-          idx++;
-        }
+        k /= 2;
+        ix = iDelta2;
+        iDelta2 += iDelta2;
+        iheight -= ix;
       }
+
+      FFTImplementationCallback::getback_radix2_fft((y), (0), (reconVar1),
+        (reconVar2), (wrapIndex), (131072));
     }
 
     //
-    // Arguments    : int nfft
-    //                boolean_T useRadix2
-    //                int *n2blue
-    //                int *nRows
+    // Arguments    : double costab[131073]
+    //                double sintab[131073]
     // Return Type  : void
     //
-    void FFTImplementationCallback::get_algo_sizes(int nfft, boolean_T useRadix2,
-      int *n2blue, int *nRows)
+    void FFTImplementationCallback::generate_twiddle_tables(double costab[131073],
+      double sintab[131073])
     {
-      *n2blue = 1;
-      if (useRadix2) {
-        *nRows = nfft;
-      } else {
-        if (nfft > 0) {
-          int n;
-          int pmax;
-          n = (nfft + nfft) - 1;
-          pmax = 31;
-          if (n <= 1) {
-            pmax = 0;
-          } else {
-            int pmin;
-            boolean_T exitg1;
-            pmin = 0;
-            exitg1 = false;
-            while ((!exitg1) && (pmax - pmin > 1)) {
-              int k;
-              int pow2p;
-              k = (pmin + pmax) >> 1;
-              pow2p = 1 << k;
-              if (pow2p == n) {
-                pmax = k;
-                exitg1 = true;
-              } else if (pow2p > n) {
-                pmax = k;
-              } else {
-                pmin = k;
-              }
-            }
-          }
+      static double costab1q[65537];
+      int k;
+      costab1q[0] = 1.0;
+      for (k = 0; k < 32768; k++) {
+        costab1q[k + 1] = std::cos(2.3968449810713143E-5 * (static_cast<double>
+          (k) + 1.0));
+      }
 
-          *n2blue = 1 << pmax;
-        }
+      for (k = 0; k < 32767; k++) {
+        costab1q[k + 32769] = std::sin(2.3968449810713143E-5 * (65536.0 - (
+          static_cast<double>(k) + 32769.0)));
+      }
 
-        *nRows = *n2blue;
+      costab1q[65536] = 0.0;
+      costab[0] = 1.0;
+      sintab[0] = 0.0;
+      for (k = 0; k < 65536; k++) {
+        double costab_tmp;
+        double sintab_tmp;
+        costab_tmp = costab1q[k + 1];
+        costab[k + 1] = costab_tmp;
+        sintab_tmp = -costab1q[65535 - k];
+        sintab[k + 1] = sintab_tmp;
+        costab[k + 65537] = sintab_tmp;
+        sintab[k + 65537] = -costab_tmp;
       }
     }
 
     //
-    // Arguments    : const ::coder::array<creal_T, 1U> &x
-    //                int unsigned_nRows
-    //                const ::coder::array<double, 2U> &costab
-    //                const ::coder::array<double, 2U> &sintab
-    //                ::coder::array<creal_T, 1U> &y
+    // Arguments    : const creal_T x[262144]
+    //                const double costab[131073]
+    //                const double sintab[131073]
+    //                creal_T y[262144]
     // Return Type  : void
     //
-    void FFTImplementationCallback::r2br_r2dit_trig_impl(const ::coder::array<
-      creal_T, 1U> &x, int unsigned_nRows, const ::coder::array<double, 2U>
-      &costab, const ::coder::array<double, 2U> &sintab, ::coder::array<creal_T,
-      1U> &y)
+    void FFTImplementationCallback::r2br_r2dit_trig(const creal_T x[262144],
+      const double costab[131073], const double sintab[131073], creal_T y[262144])
     {
       double temp_im;
       double temp_re;
       double twid_im;
       double twid_re;
       int i;
-      int iDelta2;
       int iheight;
       int ix;
       int iy;
+      int j;
       int ju;
-      int k;
-      int nRowsD2;
-      y.set_size(unsigned_nRows);
-      if (unsigned_nRows > x.size(0)) {
-        y.set_size(unsigned_nRows);
-        for (iy = 0; iy < unsigned_nRows; iy++) {
-          y[iy].re = 0.0;
-          y[iy].im = 0.0;
-        }
-      }
-
-      iDelta2 = x.size(0);
-      if (iDelta2 >= unsigned_nRows) {
-        iDelta2 = unsigned_nRows;
-      }
-
-      iheight = unsigned_nRows - 2;
-      nRowsD2 = unsigned_nRows / 2;
-      k = nRowsD2 / 2;
       ix = 0;
       iy = 0;
       ju = 0;
-      for (i = 0; i <= iDelta2 - 2; i++) {
-        boolean_T tst;
+      for (i = 0; i < 262143; i++) {
+        bool tst;
         y[iy] = x[ix];
-        iy = unsigned_nRows;
+        iy = 262144;
         tst = true;
         while (tst) {
           iy >>= 1;
@@ -870,61 +445,70 @@ namespace coder
       }
 
       y[iy] = x[ix];
-      if (unsigned_nRows > 1) {
-        for (i = 0; i <= iheight; i += 2) {
-          temp_re = y[i + 1].re;
-          temp_im = y[i + 1].im;
-          twid_re = y[i].re;
-          twid_im = y[i].im;
-          y[i + 1].re = y[i].re - y[i + 1].re;
-          y[i + 1].im = y[i].im - y[i + 1].im;
-          twid_re += temp_re;
-          twid_im += temp_im;
-          y[i].re = twid_re;
-          y[i].im = twid_im;
-        }
+      for (i = 0; i <= 262142; i += 2) {
+        double im;
+        double re;
+        twid_re = y[i + 1].re;
+        temp_re = twid_re;
+        twid_im = y[i + 1].im;
+        temp_im = twid_im;
+        re = y[i].re;
+        im = y[i].im;
+        twid_re = re - twid_re;
+        y[i + 1].re = twid_re;
+        twid_im = im - twid_im;
+        y[i + 1].im = twid_im;
+        y[i].re = re + temp_re;
+        y[i].im = im + temp_im;
       }
 
       iy = 2;
-      iDelta2 = 4;
-      iheight = ((k - 1) << 2) + 1;
-      while (k > 0) {
+      ix = 4;
+      ju = 65536;
+      iheight = 262141;
+      while (ju > 0) {
+        int istart;
         int temp_re_tmp;
-        for (i = 0; i < iheight; i += iDelta2) {
+        for (i = 0; i < iheight; i += ix) {
           temp_re_tmp = i + iy;
           temp_re = y[temp_re_tmp].re;
           temp_im = y[temp_re_tmp].im;
           y[temp_re_tmp].re = y[i].re - temp_re;
           y[temp_re_tmp].im = y[i].im - temp_im;
-          y[i].re = y[i].re + temp_re;
-          y[i].im = y[i].im + temp_im;
+          y[i].re += temp_re;
+          y[i].im += temp_im;
         }
 
-        ix = 1;
-        for (ju = k; ju < nRowsD2; ju += k) {
+        istart = 1;
+        for (j = ju; j < 131072; j += ju) {
           int ihi;
-          twid_re = costab[ju];
-          twid_im = sintab[ju];
-          i = ix;
-          ihi = ix + iheight;
+          twid_re = costab[j];
+          twid_im = sintab[j];
+          i = istart;
+          ihi = istart + iheight;
           while (i < ihi) {
             temp_re_tmp = i + iy;
             temp_re = twid_re * y[temp_re_tmp].re - twid_im * y[temp_re_tmp].im;
             temp_im = twid_re * y[temp_re_tmp].im + twid_im * y[temp_re_tmp].re;
             y[temp_re_tmp].re = y[i].re - temp_re;
             y[temp_re_tmp].im = y[i].im - temp_im;
-            y[i].re = y[i].re + temp_re;
-            y[i].im = y[i].im + temp_im;
-            i += iDelta2;
+            y[i].re += temp_re;
+            y[i].im += temp_im;
+            i += ix;
           }
 
-          ix++;
+          istart++;
         }
 
-        k /= 2;
-        iy = iDelta2;
-        iDelta2 += iDelta2;
+        ju /= 2;
+        iy = ix;
+        ix += ix;
         iheight -= iy;
+      }
+
+      for (iy = 0; iy < 262144; iy++) {
+        y[iy].re *= 3.814697265625E-6;
+        y[iy].im *= 3.814697265625E-6;
       }
     }
   }
