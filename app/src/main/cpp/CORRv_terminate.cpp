@@ -1,25 +1,25 @@
 //
-// File: CORRX_terminate.cpp
+// File: CORRv_terminate.cpp
 //
 // MATLAB Coder version            : 5.1
-// C/C++ source code generated on  : 22-Jul-2024 14:53:53
+// C/C++ source code generated on  : 03-Oct-2024 23:06:12
 //
 
 // Include Files
-#include "CORRX_terminate.h"
+#include "CORRv_terminate.h"
 
 // Function Definitions
 //
 // Arguments    : void
 // Return Type  : void
 //
-void CORRX_terminate()
+void CORRv_terminate()
 {
   // (no terminate code required)
 }
 
 //
-// File trailer for CORRX_terminate.cpp
+// File trailer for CORRv_terminate.cpp
 //
 // [EOF]
 //

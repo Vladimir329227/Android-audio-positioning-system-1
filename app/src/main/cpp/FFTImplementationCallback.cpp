@@ -2,7 +2,7 @@
 // File: FFTImplementationCallback.cpp
 //
 // MATLAB Coder version            : 5.1
-// C/C++ source code generated on  : 22-Jul-2024 14:53:53
+// C/C++ source code generated on  : 03-Oct-2024 23:06:12
 //
 
 // Include Files
@@ -11,23 +11,23 @@
 
 // Function Definitions
 //
-// Arguments    : int bitrevIndex[131072]
+// Arguments    : int bitrevIndex[524288]
 // Return Type  : void
 //
 namespace coder
 {
   namespace internal
   {
-    void FFTImplementationCallback::get_bitrevIndex(int bitrevIndex[131072])
+    void FFTImplementationCallback::get_bitrevIndex(int bitrevIndex[524288])
     {
       int iy;
       int ju;
       ju = 0;
       iy = 1;
-      for (int b_j1 = 0; b_j1 < 131071; b_j1++) {
-        bool tst;
+      for (int b_j1 = 0; b_j1 < 524287; b_j1++) {
+        boolean_T tst;
         bitrevIndex[b_j1] = iy;
-        iy = 131072;
+        iy = 524288;
         tst = true;
         while (tst) {
           iy >>= 1;
@@ -38,21 +38,21 @@ namespace coder
         iy = ju + 1;
       }
 
-      bitrevIndex[131071] = iy;
+      bitrevIndex[524287] = iy;
     }
 
     //
-    // Arguments    : creal_T y[262144]
+    // Arguments    : creal_T y[1048576]
     //                int yoff
-    //                const creal_T reconVar1[131072]
-    //                const creal_T reconVar2[131072]
-    //                const int wrapIndex[131072]
+    //                const creal_T reconVar1[524288]
+    //                const creal_T reconVar2[524288]
+    //                const int wrapIndex[524288]
     //                int hnRows
     // Return Type  : void
     //
-    void FFTImplementationCallback::getback_radix2_fft(creal_T y[262144], int
-      yoff, const creal_T reconVar1[131072], const creal_T reconVar2[131072],
-      const int wrapIndex[131072], int hnRows)
+    void FFTImplementationCallback::getback_radix2_fft(creal_T y[1048576], int
+      yoff, const creal_T reconVar1[524288], const creal_T reconVar2[524288],
+      const int wrapIndex[524288], int hnRows)
     {
       double d;
       double d1;
@@ -143,23 +143,23 @@ namespace coder
     }
 
     //
-    // Arguments    : const double x[96000]
+    // Arguments    : const double x[300000]
     //                int xoffInit
-    //                creal_T y[262144]
-    //                const double costab[131073]
-    //                const double sintab[131073]
+    //                creal_T y[1048576]
+    //                const double costab[524289]
+    //                const double sintab[524289]
     // Return Type  : void
     //
-    void FFTImplementationCallback::b_doHalfLengthRadix2(const double x[96000],
-      int xoffInit, creal_T y[262144], const double costab[131073], const double
-      sintab[131073])
+    void FFTImplementationCallback::b_doHalfLengthRadix2(const double x[300000],
+      int xoffInit, creal_T y[1048576], const double costab[524289], const
+      double sintab[524289])
     {
-      static creal_T reconVar1[131072];
-      static creal_T reconVar2[131072];
-      static double hcostab[65536];
-      static double hsintab[65536];
-      static int bitrevIndex[131072];
-      static int wrapIndex[131072];
+      static creal_T reconVar1[524288];
+      static creal_T reconVar2[524288];
+      static double hcostab[262144];
+      static double hsintab[262144];
+      static int bitrevIndex[524288];
+      static int wrapIndex[524288];
       double temp_im;
       double temp_re;
       int i;
@@ -168,13 +168,13 @@ namespace coder
       int ix;
       int j;
       int k;
-      for (i = 0; i < 65536; i++) {
+      for (i = 0; i < 262144; i++) {
         ix = ((i + 1) << 1) - 2;
         hcostab[i] = costab[ix];
         hsintab[i] = sintab[ix];
       }
 
-      for (i = 0; i < 131072; i++) {
+      for (i = 0; i < 524288; i++) {
         temp_re = sintab[i];
         reconVar1[i].re = temp_re + 1.0;
         temp_im = costab[i];
@@ -182,7 +182,7 @@ namespace coder
         reconVar2[i].re = 1.0 - temp_re;
         reconVar2[i].im = temp_im;
         if (i + 1 != 1) {
-          wrapIndex[i] = 131073 - i;
+          wrapIndex[i] = 524289 - i;
         } else {
           wrapIndex[0] = 1;
         }
@@ -190,14 +190,14 @@ namespace coder
 
       FFTImplementationCallback::get_bitrevIndex((bitrevIndex));
       ix = xoffInit;
-      for (i = 0; i < 48000; i++) {
+      for (i = 0; i < 150000; i++) {
         iDelta2 = bitrevIndex[i];
         y[iDelta2 - 1].re = x[ix];
         y[iDelta2 - 1].im = x[ix + 1];
         ix += 2;
       }
 
-      for (i = 0; i <= 131070; i += 2) {
+      for (i = 0; i <= 524286; i += 2) {
         temp_re = y[i + 1].re;
         temp_im = y[i + 1].im;
         y[i + 1].re = y[i].re - y[i + 1].re;
@@ -208,8 +208,8 @@ namespace coder
 
       ix = 2;
       iDelta2 = 4;
-      k = 32768;
-      iheight = 131069;
+      k = 131072;
+      iheight = 524285;
       while (k > 0) {
         int istart;
         int temp_re_tmp;
@@ -224,7 +224,7 @@ namespace coder
         }
 
         istart = 1;
-        for (j = k; j < 65536; j += k) {
+        for (j = k; j < 262144; j += k) {
           double twid_im;
           double twid_re;
           int ihi;
@@ -253,27 +253,27 @@ namespace coder
       }
 
       FFTImplementationCallback::getback_radix2_fft((y), (0), (reconVar1),
-        (reconVar2), (wrapIndex), (131072));
+        (reconVar2), (wrapIndex), (524288));
     }
 
     //
-    // Arguments    : const double x[10000]
+    // Arguments    : const double x[25000]
     //                int xoffInit
-    //                creal_T y[262144]
-    //                const double costab[131073]
-    //                const double sintab[131073]
+    //                creal_T y[1048576]
+    //                const double costab[524289]
+    //                const double sintab[524289]
     // Return Type  : void
     //
-    void FFTImplementationCallback::doHalfLengthRadix2(const double x[10000],
-      int xoffInit, creal_T y[262144], const double costab[131073], const double
-      sintab[131073])
+    void FFTImplementationCallback::doHalfLengthRadix2(const double x[25000],
+      int xoffInit, creal_T y[1048576], const double costab[524289], const
+      double sintab[524289])
     {
-      static creal_T reconVar1[131072];
-      static creal_T reconVar2[131072];
-      static double hcostab[65536];
-      static double hsintab[65536];
-      static int bitrevIndex[131072];
-      static int wrapIndex[131072];
+      static creal_T reconVar1[524288];
+      static creal_T reconVar2[524288];
+      static double hcostab[262144];
+      static double hsintab[262144];
+      static int bitrevIndex[524288];
+      static int wrapIndex[524288];
       double temp_im;
       double temp_re;
       int i;
@@ -282,13 +282,13 @@ namespace coder
       int ix;
       int j;
       int k;
-      for (i = 0; i < 65536; i++) {
+      for (i = 0; i < 262144; i++) {
         ix = ((i + 1) << 1) - 2;
         hcostab[i] = costab[ix];
         hsintab[i] = sintab[ix];
       }
 
-      for (i = 0; i < 131072; i++) {
+      for (i = 0; i < 524288; i++) {
         temp_re = sintab[i];
         reconVar1[i].re = temp_re + 1.0;
         temp_im = costab[i];
@@ -296,7 +296,7 @@ namespace coder
         reconVar2[i].re = 1.0 - temp_re;
         reconVar2[i].im = temp_im;
         if (i + 1 != 1) {
-          wrapIndex[i] = 131073 - i;
+          wrapIndex[i] = 524289 - i;
         } else {
           wrapIndex[0] = 1;
         }
@@ -304,14 +304,14 @@ namespace coder
 
       FFTImplementationCallback::get_bitrevIndex((bitrevIndex));
       ix = xoffInit;
-      for (i = 0; i < 5000; i++) {
+      for (i = 0; i < 12500; i++) {
         iDelta2 = bitrevIndex[i];
         y[iDelta2 - 1].re = x[ix];
         y[iDelta2 - 1].im = x[ix + 1];
         ix += 2;
       }
 
-      for (i = 0; i <= 131070; i += 2) {
+      for (i = 0; i <= 524286; i += 2) {
         temp_re = y[i + 1].re;
         temp_im = y[i + 1].im;
         y[i + 1].re = y[i].re - y[i + 1].re;
@@ -322,8 +322,8 @@ namespace coder
 
       ix = 2;
       iDelta2 = 4;
-      k = 32768;
-      iheight = 131069;
+      k = 131072;
+      iheight = 524285;
       while (k > 0) {
         int istart;
         int temp_re_tmp;
@@ -338,7 +338,7 @@ namespace coder
         }
 
         istart = 1;
-        for (j = k; j < 65536; j += k) {
+        for (j = k; j < 262144; j += k) {
           double twid_im;
           double twid_re;
           int ihi;
@@ -367,54 +367,55 @@ namespace coder
       }
 
       FFTImplementationCallback::getback_radix2_fft((y), (0), (reconVar1),
-        (reconVar2), (wrapIndex), (131072));
+        (reconVar2), (wrapIndex), (524288));
     }
 
     //
-    // Arguments    : double costab[131073]
-    //                double sintab[131073]
+    // Arguments    : double costab[524289]
+    //                double sintab[524289]
     // Return Type  : void
     //
-    void FFTImplementationCallback::generate_twiddle_tables(double costab[131073],
-      double sintab[131073])
+    void FFTImplementationCallback::generate_twiddle_tables(double costab[524289],
+      double sintab[524289])
     {
-      static double costab1q[65537];
+      static double costab1q[262145];
       int k;
       costab1q[0] = 1.0;
-      for (k = 0; k < 32768; k++) {
-        costab1q[k + 1] = std::cos(2.3968449810713143E-5 * (static_cast<double>
+      for (k = 0; k < 131072; k++) {
+        costab1q[k + 1] = std::cos(5.9921124526782858E-6 * (static_cast<double>
           (k) + 1.0));
       }
 
-      for (k = 0; k < 32767; k++) {
-        costab1q[k + 32769] = std::sin(2.3968449810713143E-5 * (65536.0 - (
-          static_cast<double>(k) + 32769.0)));
+      for (k = 0; k < 131071; k++) {
+        costab1q[k + 131073] = std::sin(5.9921124526782858E-6 * (262144.0 - (
+          static_cast<double>(k) + 131073.0)));
       }
 
-      costab1q[65536] = 0.0;
+      costab1q[262144] = 0.0;
       costab[0] = 1.0;
       sintab[0] = 0.0;
-      for (k = 0; k < 65536; k++) {
+      for (k = 0; k < 262144; k++) {
         double costab_tmp;
         double sintab_tmp;
         costab_tmp = costab1q[k + 1];
         costab[k + 1] = costab_tmp;
-        sintab_tmp = -costab1q[65535 - k];
+        sintab_tmp = -costab1q[262143 - k];
         sintab[k + 1] = sintab_tmp;
-        costab[k + 65537] = sintab_tmp;
-        sintab[k + 65537] = -costab_tmp;
+        costab[k + 262145] = sintab_tmp;
+        sintab[k + 262145] = -costab_tmp;
       }
     }
 
     //
-    // Arguments    : const creal_T x[262144]
-    //                const double costab[131073]
-    //                const double sintab[131073]
-    //                creal_T y[262144]
+    // Arguments    : const creal_T x[1048576]
+    //                const double costab[524289]
+    //                const double sintab[524289]
+    //                creal_T y[1048576]
     // Return Type  : void
     //
-    void FFTImplementationCallback::r2br_r2dit_trig(const creal_T x[262144],
-      const double costab[131073], const double sintab[131073], creal_T y[262144])
+    void FFTImplementationCallback::r2br_r2dit_trig(const creal_T x[1048576],
+      const double costab[524289], const double sintab[524289], creal_T y
+      [1048576])
     {
       double temp_im;
       double temp_re;
@@ -429,10 +430,10 @@ namespace coder
       ix = 0;
       iy = 0;
       ju = 0;
-      for (i = 0; i < 262143; i++) {
-        bool tst;
+      for (i = 0; i < 1048575; i++) {
+        boolean_T tst;
         y[iy] = x[ix];
-        iy = 262144;
+        iy = 1048576;
         tst = true;
         while (tst) {
           iy >>= 1;
@@ -445,7 +446,7 @@ namespace coder
       }
 
       y[iy] = x[ix];
-      for (i = 0; i <= 262142; i += 2) {
+      for (i = 0; i <= 1048574; i += 2) {
         double im;
         double re;
         twid_re = y[i + 1].re;
@@ -464,8 +465,8 @@ namespace coder
 
       iy = 2;
       ix = 4;
-      ju = 65536;
-      iheight = 262141;
+      ju = 262144;
+      iheight = 1048573;
       while (ju > 0) {
         int istart;
         int temp_re_tmp;
@@ -480,7 +481,7 @@ namespace coder
         }
 
         istart = 1;
-        for (j = ju; j < 131072; j += ju) {
+        for (j = ju; j < 524288; j += ju) {
           int ihi;
           twid_re = costab[j];
           twid_im = sintab[j];
@@ -506,9 +507,9 @@ namespace coder
         iheight -= iy;
       }
 
-      for (iy = 0; iy < 262144; iy++) {
-        y[iy].re *= 3.814697265625E-6;
-        y[iy].im *= 3.814697265625E-6;
+      for (iy = 0; iy < 1048576; iy++) {
+        y[iy].re *= 9.5367431640625E-7;
+        y[iy].im *= 9.5367431640625E-7;
       }
     }
   }

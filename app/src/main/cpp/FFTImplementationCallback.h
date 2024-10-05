@@ -2,7 +2,7 @@
 // File: FFTImplementationCallback.h
 //
 // MATLAB Coder version            : 5.1
-// C/C++ source code generated on  : 22-Jul-2024 14:53:53
+// C/C++ source code generated on  : 03-Oct-2024 23:06:12
 //
 #ifndef FFTIMPLEMENTATIONCALLBACK_H
 #define FFTIMPLEMENTATIONCALLBACK_H
@@ -20,21 +20,21 @@ namespace coder
     class FFTImplementationCallback
     {
      public:
-      static void generate_twiddle_tables(double costab[131073], double sintab
-        [131073]);
-      static void r2br_r2dit_trig(const creal_T x[262144], const double costab
-        [131073], const double sintab[131073], creal_T y[262144]);
-      static void doHalfLengthRadix2(const double x[10000], int xoffInit,
-        creal_T y[262144], const double costab[131073], const double sintab
-        [131073]);
-      static void b_doHalfLengthRadix2(const double x[96000], int xoffInit,
-        creal_T y[262144], const double costab[131073], const double sintab
-        [131073]);
+      static void generate_twiddle_tables(double costab[524289], double sintab
+        [524289]);
+      static void r2br_r2dit_trig(const creal_T x[1048576], const double costab
+        [524289], const double sintab[524289], creal_T y[1048576]);
+      static void doHalfLengthRadix2(const double x[25000], int xoffInit,
+        creal_T y[1048576], const double costab[524289], const double sintab
+        [524289]);
+      static void b_doHalfLengthRadix2(const double x[300000], int xoffInit,
+        creal_T y[1048576], const double costab[524289], const double sintab
+        [524289]);
      protected:
-      static void get_bitrevIndex(int bitrevIndex[131072]);
-      static void getback_radix2_fft(creal_T y[262144], int yoff, const creal_T
-        reconVar1[131072], const creal_T reconVar2[131072], const int wrapIndex
-        [131072], int hnRows);
+      static void get_bitrevIndex(int bitrevIndex[524288]);
+      static void getback_radix2_fft(creal_T y[1048576], int yoff, const creal_T
+        reconVar1[524288], const creal_T reconVar2[524288], const int wrapIndex
+        [524288], int hnRows);
     };
   }
 }

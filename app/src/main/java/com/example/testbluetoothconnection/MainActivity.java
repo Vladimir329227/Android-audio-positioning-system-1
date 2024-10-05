@@ -155,7 +155,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, sampleRate, channelConfig, audioFormat, myBufferSize);
     }
 
-    int razmer = 144000;
+    int razmer = 48000;
     int chastota = 48000;
 
     short[] testBuff1 = new short[razmer];
@@ -165,6 +165,26 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     int cur_nam = 0;
 
     public void add_to_file(short[] buff, String name){
+        FileOutputStream fos = null;
+        try {
+            String text = Arrays.toString(buff);
+            Log.d(TAG, text);
+
+            fos = openFileOutput(name, MODE_PRIVATE);
+            fos.write(text.getBytes());
+        }
+        catch(IOException ex) {
+        }
+        finally {
+            try {
+                if (fos != null)
+                    fos.close();
+            } catch (IOException ex) {
+            }
+        }
+    }
+
+    public void add_to_file(double[] buff, String name){
         FileOutputStream fos = null;
         try {
             String text = Arrays.toString(buff);
@@ -426,7 +446,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         buttun_find_zvuk = (Button) findViewById(R.id.button4);
         buttun_sverit_zv = (Button) findViewById(R.id.button5);
 
-        mPlayer = MediaPlayer.create(this, R.raw.right_sound);
+        mPlayer = MediaPlayer.create(this, R.raw.zwuk3);
 
         buttun_sverit_zv.setOnClickListener(new View.OnClickListener() {
 
@@ -452,6 +472,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         buttun_find_zvuk.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View v) {
+
+                if (isReading){
+                    readStop(v);
+                }
+                else {
+                    readStart(v);
+                }
+
                 text_t.setText("Ok 21/06/24");
                 int resId = R.raw.test1; // replace my_audio_file with the name of your audio file
                 String filePath = "android.resource://" + getPackageName() + "/" + resId;
@@ -462,13 +490,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 startActivityForResult(intent, 666);
 */
                 createAudioRecorder();
-
-                if (isReading){
-                    readStop(v);
-                }
-                else {
-                    readStart(v);
-                }
             }
         });
 
@@ -487,8 +508,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                 Log.d(TAG, "++++++16/08/2024++++++++ :" + Arrays.toString(testBuff1));
 
-                /*double[] rez_skan = argInit_real_T(testBuff1, testBuff1.length, 0);
-                double[] rez_skan2 = argInit_real_T(testBuff1, testBuff1.length, 1);
+                double[] rez_skan = argInit_real_T(interpolatedBuffer, interpolatedBuffer.length, 0);
+                add_to_file(rez_skan, "test3.txt");
+                double[] rez_skan2 = argInit_real_T(interpolatedBuffer, interpolatedBuffer.length, 1);
                 double rez_skan_fin = 0, max_i=0;
                 double rez_skan_fin2 = 0, max_i2=0;
                 for(int i=0;i<rez_skan.length;i++){
@@ -503,12 +525,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         max_i2 = i;
                     }
                 }
-                double dist = abs(max_i - max_i2) / 8000 * 340 * 1000;
+                double dist = abs(max_i - max_i2) / 300000 * 340 * 1000;
 
                 text_t.setText(Double.toString(rez_skan_fin)+" "+Double.toString(max_i) + "\n" + Double.toString(rez_skan_fin2)+" "+Double.toString(max_i2) + "\n" + Double.toString(dist));
                 //text_t.setText(Arrays.toString(argInit_real_T(vremena, testBuff1, vremena.length, testBuff1.length)));
                 mPlayer.start(); // игра звука
-                 */
             }
         });
 
