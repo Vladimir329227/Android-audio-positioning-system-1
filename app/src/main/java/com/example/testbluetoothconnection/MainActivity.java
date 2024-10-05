@@ -509,7 +509,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 Log.d(TAG, "++++++16/08/2024++++++++ :" + Arrays.toString(testBuff1));
 
                 double[] rez_skan = argInit_real_T(interpolatedBuffer, interpolatedBuffer.length, 0);
-                add_to_file(rez_skan, "test3.txt");
+                add_to_file(rez_skan, "test3.txt"
                 double[] rez_skan2 = argInit_real_T(interpolatedBuffer, interpolatedBuffer.length, 1);
                 double rez_skan_fin = 0, max_i=0;
                 double rez_skan_fin2 = 0, max_i2=0;
